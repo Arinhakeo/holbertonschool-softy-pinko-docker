@@ -212,3 +212,176 @@ Ce tutoriel vous a guidé à travers l'utilisation de **Docker Compose** pour si
 3. Construire et exécuter plusieurs conteneurs en une seule commande.
 
 Ces compétences sont essentielles pour gérer des applications complexes avec plusieurs composants.
+
+# Alternatif:
+
+### 1. Vérifier la structure du projet
+Assurez-vous que votre répertoire `task4` est correctement structuré. Voici un exemple de structure de fichiers :
+
+```
+task4/
+├── docker-compose.yml
+├── back-end/
+│   ├── Dockerfile
+│   ├── api.py
+├── front-end/
+│   ├── Dockerfile
+│   ├── softy-pinko-front-end.conf
+│   ├── softy-pinko-front-end/ (fichiers HTML/CSS/JS)
+```
+
+---
+
+### 2. Exemple de `docker-compose.yml`
+Voici un exemple de fichier `docker-compose.yml` pour votre projet :
+
+```yaml
+version: '3.8'
+
+services:
+  back-end:
+    build:
+      context: ./back-end
+      dockerfile: Dockerfile
+    image: softy-pinko-back-end:task4
+    ports:
+      - "5252:5252"  # Expose le port 5252 du conteneur sur le port 5252 de l'hôte
+    depends_on:
+      - front-end
+
+  front-end:
+    build:
+      context: ./front-end
+      dockerfile: Dockerfile
+    image: softy-pinko-front-end:task4
+    ports:
+      - "80:80"  # Expose le port 80 du conteneur sur le port 80 de l'hôte
+```
+
+---
+
+### 3. Vérifier les fichiers `Dockerfile`
+Assurez-vous que vos fichiers `Dockerfile` sont correctement configurés.
+
+#### Exemple pour le back-end (`back-end/Dockerfile`) :
+```dockerfile
+FROM ubuntu:latest
+
+RUN apt-get update && apt-get upgrade -y
+RUN apt-get install -y python3 python3-pip
+
+WORKDIR /app
+COPY api.py /app/api.py
+
+RUN pip3 install flask flask-cors
+
+CMD ["python3", "api.py"]
+```
+
+#### Exemple pour le front-end (`front-end/Dockerfile`) :
+```dockerfile
+FROM nginx:latest
+
+COPY softy-pinko-front-end /var/www/html/softy-pinko-front-end
+COPY softy-pinko-front-end.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+```
+
+---
+
+### 4. Vérifier les fichiers de configuration
+#### Exemple de fichier `api.py` pour le back-end :
+```python
+from flask import Flask, jsonify
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app)
+
+@app.route('/')
+def hello():
+    return jsonify(message="Hello from the back-end!")
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5252)
+```
+
+#### Exemple de fichier `softy-pinko-front-end.conf` pour le front-end :
+```nginx
+server {
+    listen 80;
+    server_name localhost;
+
+    location / {
+        root /var/www/html/softy-pinko-front-end;
+        index index.html;
+    }
+}
+```
+
+---
+
+### 5. Construire et exécuter avec Docker Compose
+Une fois que tout est configuré, exécutez les commandes suivantes :
+
+```bash
+docker-compose build
+docker-compose up
+```
+
+Cela devrait démarrer les deux services (back-end et front-end) et les exposer sur les ports spécifiés.
+
+---
+
+### 6. Accéder à l'application
+- **Front-end** : Ouvrez votre navigateur et accédez à `http://localhost:80`.
+- **Back-end** : Vous pouvez tester l'API en accédant à `http://localhost:5252`.
+
+---
+
+### 7. Vérifier les logs
+Si vous ne parvenez toujours pas à accéder à l'application, vérifiez les logs des conteneurs pour identifier les erreurs :
+
+```bash
+docker-compose logs
+```
+
+Cela vous donnera des informations sur ce qui ne fonctionne pas.
+
+---
+
+### 8. Vérifier les ports
+Assurez-vous que les ports spécifiés dans `docker-compose.yml` ne sont pas déjà utilisés par d'autres applications sur votre machine. Vous pouvez vérifier les ports en cours d'utilisation avec :
+
+```bash
+sudo netstat -tuln | grep LISTEN
+```
+
+---
+
+### 9. Redémarrer Docker
+Parfois, Docker peut avoir des problèmes de réseau. Essayez de redémarrer Docker :
+
+```bash
+sudo systemctl restart docker
+```
+
+---
+
+### 10. Exemple de sortie attendue
+Si tout fonctionne correctement, vous devriez voir quelque chose comme ceci dans les logs :
+
+```
+task4-back-end-1   |  * Running on http://0.0.0.0:5252
+task4-front-end-1  | 2023/06/12 19:27:43 [notice] 1#1: start worker processes
+```
+
+---
+
+### Résumé des étapes
+1. Vérifiez la structure du projet.
+2. Configurez correctement `docker-compose.yml`.
+3. Assurez-vous que les fichiers `Dockerfile` et de configuration sont corrects.
+4. Construisez et exécutez les conteneurs avec `docker-compose build` et `docker-compose up`.
+5. Accédez à l'application via `http://localhost:80` (front-end) et `http://localhost:5252` (back-end).

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<body>
+
+    <h1 id="dynamic-content"></h1>
+
+    <script>
+        // Charger les données dynamiques du back-end sur le port 5252
+        $(function() {
+            $.ajax({
+                type: "GET",
+                url: "http://localhost:5252/api/hello",
+                success: function(data) {
+                    console.log(data);
+                    $('#dynamic-content').text(data);
+                }
+            });
+        });
+    </script>
+    
+</body>
